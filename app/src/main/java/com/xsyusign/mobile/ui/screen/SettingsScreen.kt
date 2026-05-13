@@ -2,6 +2,7 @@ package com.xsyusign.mobile.ui.screen
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -16,6 +17,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.xsyusign.mobile.util.SettingsManager
+import com.xsyusign.mobile.worker.WorkerScheduler
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,6 +68,39 @@ fun SettingsScreen(onBack: () -> Unit) {
                             SettingsManager.setNotificationEnabled(context, it)
                         }
                     )
+                }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            Text("定时任务", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+
+            var isTesting by remember { mutableStateOf(false) }
+            val scope = rememberCoroutineScope()
+            ListItem(
+                headlineContent = { Text("测试定时任务") },
+                supportingContent = {
+                    Text(
+                        if (isTesting) "正在执行测试…" else "立即触发一次签到巡检，验证定时任务是否正常"
+                    )
+                },
+                leadingContent = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
+                trailingContent = {
+                    if (isTesting) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    } else {
+                        TextButton(onClick = {
+                            isTesting = true
+                            scope.launch {
+                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                    WorkerScheduler.signAllNow(context)
+                                }
+                                kotlinx.coroutines.delay(500)
+                                isTesting = false
+                                Toast.makeText(context, "测试任务已触发，查看通知栏或签到日志", Toast.LENGTH_LONG).show()
+                            }
+                        }) { Text("运行") }
+                    }
                 }
             )
 

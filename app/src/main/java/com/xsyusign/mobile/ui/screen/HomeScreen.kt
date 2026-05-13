@@ -238,6 +238,8 @@ fun HomeScreen(
                             SetupStep("2", "启动管理 → 开启「自启动」", "设置 → 应用 → 启动管理 → 允许")
                             Spacer(Modifier.height(6.dp))
                             SetupStep("3", "多任务界面 → 锁定应用", "划出多任务 → 长按本应用 → 锁定")
+                            Spacer(Modifier.height(6.dp))
+                            SetupStep("4", "设置完成后，去「设置 → 测试定时任务」验证", "点击运行按钮，查看是否收到签到通知")
                         }
                     }
                 }
@@ -480,9 +482,15 @@ private fun UserLogDialog(
                         loadError != null -> Text("加载失败: $loadError", color = MaterialTheme.colorScheme.error)
                         serverItems.isEmpty() -> Text("服务器无签到记录")
                         else -> {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                serverItems.forEach { item ->
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                serverItems.take(10).forEach { item ->
                                     val isSigned = item.signStatus == 2
+                                    val startStr = item.start?.let { ts ->
+                                        try { SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(ts)) } catch (e: Exception) { null }
+                                    } ?: ""
+                                    val endStr = item.end?.let { ts ->
+                                        try { SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(ts)) } catch (e: Exception) { null }
+                                    } ?: ""
                                     val dateStr = if (item.date != null) {
                                         try {
                                             val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
@@ -490,28 +498,55 @@ private fun UserLogDialog(
                                             fmt.format(sdf.parse(item.date)!!)
                                         } catch (e: Exception) { item.date ?: "" }
                                     } else ""
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            if (isSigned) Icons.Filled.CheckCircle else Icons.Filled.Schedule,
-                                            contentDescription = null,
-                                            tint = if (isSigned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Spacer(Modifier.width(8.dp))
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                item.signTitle ?: "签到",
-                                                style = MaterialTheme.typography.bodySmall
+                                    val area = item.area?.takeIf { it.isNotEmpty() } ?: item.areaId ?: ""
+
+                                    Surface(
+                                        color = if (isSigned) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                                                else MaterialTheme.colorScheme.surfaceVariant,
+                                        shape = MaterialTheme.shapes.small
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(10.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                if (isSigned) Icons.Filled.CheckCircle else Icons.Filled.Schedule,
+                                                contentDescription = null,
+                                                tint = if (isSigned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                                                modifier = Modifier.size(18.dp)
                                             )
-                                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Spacer(Modifier.width(8.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
                                                 Text(
-                                                    if (isSigned) "已签" else "未签",
+                                                    item.signTitle ?: "签到任务",
                                                     style = MaterialTheme.typography.bodySmall,
-                                                    color = if (isSigned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                                    fontWeight = if (isSigned) FontWeight.Bold else FontWeight.Normal,
+                                                    maxLines = 1
                                                 )
+                                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                    Text(
+                                                        if (isSigned) "✅已签" else "⏳未签",
+                                                        style = MaterialTheme.typography.labelLarge
+                                                    )
+                                                    if (startStr.isNotEmpty() && endStr.isNotEmpty()) {
+                                                        Text(
+                                                            "$startStr-$endStr",
+                                                            style = MaterialTheme.typography.labelLarge,
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    }
+                                                }
                                                 if (dateStr.isNotEmpty()) {
-                                                    Text(dateStr, style = MaterialTheme.typography.bodySmall,
+                                                    Text(dateStr, style = MaterialTheme.typography.labelLarge,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                }
+                                                if (area.isNotEmpty()) {
+                                                    Text(
+                                                        "📍 $area",
+                                                        style = MaterialTheme.typography.labelLarge,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        maxLines = 1
+                                                    )
                                                 }
                                             }
                                         }
