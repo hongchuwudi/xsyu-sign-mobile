@@ -16,8 +16,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.work.WorkManager
 import com.xsyusign.mobile.util.SettingsManager
-import com.xsyusign.mobile.worker.WorkerScheduler
+import com.xsyusign.mobile.worker.TestWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -81,7 +82,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                 headlineContent = { Text("测试定时任务") },
                 supportingContent = {
                     Text(
-                        if (isTesting) "正在执行测试…" else "立即触发一次签到巡检，验证定时任务是否正常"
+                        if (isTesting) "30 秒后将收到通知…" else "延迟 30 秒发送通知，验证手机是否允许后台定时任务"
                     )
                 },
                 leadingContent = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
@@ -92,12 +93,11 @@ fun SettingsScreen(onBack: () -> Unit) {
                         TextButton(onClick = {
                             isTesting = true
                             scope.launch {
-                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                    WorkerScheduler.signAllNow(context)
+                                withContext(Dispatchers.IO) {
+                                    WorkManager.getInstance(context).enqueue(TestWorker.oneTimeRequest())
                                 }
-                                kotlinx.coroutines.delay(500)
                                 isTesting = false
-                                Toast.makeText(context, "测试任务已触发，查看通知栏或签到日志", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "已调度，30 秒后查看通知栏", Toast.LENGTH_LONG).show()
                             }
                         }) { Text("运行") }
                     }
@@ -156,6 +156,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                             Text("✅ 数据不上传服务器", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                             Text("⚠ 需自己配置签到计划", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                             Text("⚠ 手机需保持开机", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                            Text("⚠ 部分手机定时可能失效", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                         }
                     }
                     Spacer(Modifier.height(10.dp))
@@ -163,6 +164,12 @@ fun SettingsScreen(onBack: () -> Unit) {
                         "hongchu.xyz 域名到期后网页版将停止运营，届时请使用本 App 替代。",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "注意：小米/OPPO/vivo/华为等机型对后台管控严格，可能导致定时签到失效。首次使用请到「设置 → 测试定时任务」验证。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
             }
