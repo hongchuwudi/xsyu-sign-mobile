@@ -17,12 +17,20 @@ import com.xsyusign.mobile.data.entity.SignLog
 import com.xsyusign.mobile.data.entity.User
 import com.xsyusign.mobile.data.repository.SignLogRepository
 import com.xsyusign.mobile.data.repository.UserRepository
+import com.xsyusign.mobile.network.CasLoginService
+import com.xsyusign.mobile.network.SignApiService
+import com.xsyusign.mobile.network.dto.SignItem
 import com.xsyusign.mobile.util.SettingsManager
 import com.xsyusign.mobile.worker.WorkerScheduler
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -384,44 +392,131 @@ private fun UserLogDialog(
     onDismiss: () -> Unit
 ) {
     var logs by remember { mutableStateOf<List<SignLog>>(emptyList()) }
+    var selectedTab by remember { mutableIntStateOf(0) }
+    var serverItems by remember { mutableStateOf<List<SignItem>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var loadError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(user.id) {
         logRepo.observeByUser(user.id, 10).collect { logs = it }
     }
 
+    // 切换到服务器记录时自动拉取
+    LaunchedEffect(selectedTab) {
+        if (selectedTab == 1 && serverItems.isEmpty() && !isLoading) {
+            isLoading = true
+            loadError = null
+            val items = withContext(Dispatchers.IO) {
+                try {
+                    val jws = CasLoginService.login(user.username, user.password)
+                    if (jws == null) return@withContext null to "CAS 登录失败"
+                    val resp = SignApiService.getSignList(jws, page = 1, size = 50)
+                    if (resp.code != 0 && resp.code != 200) return@withContext null to (resp.message ?: "请求失败")
+                    resp.data to null
+                } catch (e: Exception) {
+                    null to e.message
+                }
+            }
+            isLoading = false
+            if (items.second != null) loadError = items.second
+            else serverItems = items.first ?: emptyList()
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(user.name.ifEmpty { user.username }, fontWeight = FontWeight.Bold)
+            Column {
+                Text(user.name.ifEmpty { user.username }, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(4.dp))
+                TabRow(selectedTabIndex = selectedTab) {
+                    Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }) {
+                        Text("本地日志", modifier = Modifier.padding(12.dp))
+                    }
+                    Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }) {
+                        Text("服务器记录", modifier = Modifier.padding(12.dp))
+                    }
+                }
+            }
         },
         text = {
-            if (logs.isEmpty()) {
-                Text("暂无签到记录", style = MaterialTheme.typography.bodyMedium)
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    logs.forEach { log ->
-                        val dateFormat = DateTimeFormatter.ofPattern("MM-dd HH:mm")
-                        val isSuccess = log.result.contains("成功")
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                if (isSuccess) Icons.Filled.CheckCircle else Icons.Filled.ErrorOutline,
-                                contentDescription = null,
-                                tint = if (isSuccess) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    log.signTitle.ifEmpty { log.result },
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                                Text(
-                                    java.time.LocalDateTime.ofInstant(
-                                        Instant.ofEpochMilli(log.createdAt), ZoneId.systemDefault()
-                                    ).format(dateFormat),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+            when (selectedTab) {
+                0 -> {
+                    if (logs.isEmpty()) {
+                        Text("暂无本地日志", style = MaterialTheme.typography.bodyMedium)
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            logs.forEach { log ->
+                                val dateFormat = DateTimeFormatter.ofPattern("MM-dd HH:mm")
+                                val isSuccess = log.result.contains("成功")
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        if (isSuccess) Icons.Filled.CheckCircle else Icons.Filled.ErrorOutline,
+                                        contentDescription = null,
+                                        tint = if (isSuccess) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(log.signTitle.ifEmpty { log.result }, style = MaterialTheme.typography.bodySmall)
+                                        Text(
+                                            java.time.LocalDateTime.ofInstant(Instant.ofEpochMilli(log.createdAt), ZoneId.systemDefault()).format(dateFormat),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                1 -> {
+                    when {
+                        isLoading -> {
+                            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                            }
+                        }
+                        loadError != null -> Text("加载失败: $loadError", color = MaterialTheme.colorScheme.error)
+                        serverItems.isEmpty() -> Text("服务器无签到记录")
+                        else -> {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                serverItems.forEach { item ->
+                                    val isSigned = item.signStatus == 2
+                                    val dateStr = if (item.date != null) {
+                                        try {
+                                            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                                            val fmt = SimpleDateFormat("MM-dd HH:mm", Locale.getDefault())
+                                            fmt.format(sdf.parse(item.date)!!)
+                                        } catch (e: Exception) { item.date ?: "" }
+                                    } else ""
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            if (isSigned) Icons.Filled.CheckCircle else Icons.Filled.Schedule,
+                                            contentDescription = null,
+                                            tint = if (isSigned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                item.signTitle ?: "签到",
+                                                style = MaterialTheme.typography.bodySmall
+                                            )
+                                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                Text(
+                                                    if (isSigned) "已签" else "未签",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = if (isSigned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                                if (dateStr.isNotEmpty()) {
+                                                    Text(dateStr, style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
