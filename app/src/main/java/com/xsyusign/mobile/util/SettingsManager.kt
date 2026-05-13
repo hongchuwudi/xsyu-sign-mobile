@@ -9,6 +9,7 @@ object SettingsManager {
     private const val KEY_NOTIFICATION = "notification_enabled"
     private const val KEY_SHOW_GUIDE = "show_battery_guide"
     private const val KEY_FIRST_LAUNCH = "first_launch_done"
+    private const val KEY_KEEP_ALIVE = "keep_alive_enabled"
 
     private fun prefs(ctx: Context): SharedPreferences =
         ctx.applicationContext.getSharedPreferences(NAME, Context.MODE_PRIVATE)
@@ -24,6 +25,13 @@ object SettingsManager {
 
     fun setShowGuide(ctx: Context, show: Boolean) =
         prefs(ctx).edit().putBoolean(KEY_SHOW_GUIDE, show).apply()
+
+    fun isKeepAliveEnabled(ctx: Context): Boolean =
+        prefs(ctx).getBoolean(KEY_KEEP_ALIVE, false)
+
+    fun setKeepAliveEnabled(ctx: Context, enabled: Boolean) {
+        prefs(ctx).edit().putBoolean(KEY_KEEP_ALIVE, enabled).apply()
+    }
 
     /** 首次启动返回 true，调用后标记为已启动 */
     fun isFirstLaunch(ctx: Context): Boolean {

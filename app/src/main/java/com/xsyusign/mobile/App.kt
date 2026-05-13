@@ -7,6 +7,8 @@ import android.util.Log
 import android.widget.Toast
 import androidx.work.Configuration
 import androidx.work.WorkManager
+import com.xsyusign.mobile.util.SettingsManager
+import com.xsyusign.mobile.worker.KeepAliveService
 import com.xsyusign.mobile.worker.WorkerScheduler
 
 class App : Application(), Configuration.Provider {
@@ -29,6 +31,12 @@ class App : Application(), Configuration.Provider {
             Handler(Looper.getMainLooper()).post {
                 Toast.makeText(this, "定时签到已启动", Toast.LENGTH_SHORT).show()
             }
+        }
+
+        // 如果用户开启了前台保活，启动服务
+        if (SettingsManager.isKeepAliveEnabled(this)) {
+            KeepAliveService.start(this)
+            Log.i("hongchu-sign", "前台保活服务已启动")
         }
     }
 

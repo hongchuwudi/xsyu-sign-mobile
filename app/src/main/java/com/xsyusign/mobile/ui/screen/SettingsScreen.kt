@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.xsyusign.mobile.util.SettingsManager
+import com.xsyusign.mobile.worker.KeepAliveService
 import com.xsyusign.mobile.worker.SignAlarmReceiver
 import com.xsyusign.mobile.worker.TestAlarmReceiver
 import kotlinx.coroutines.Dispatchers
@@ -75,6 +76,40 @@ fun SettingsScreen(onBack: () -> Unit) {
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             Text("定时任务", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+
+            var keepAlive by remember { mutableStateOf(SettingsManager.isKeepAliveEnabled(context)) }
+            ListItem(
+                headlineContent = { Text("前台服务保活") },
+                supportingContent = {
+                    Text(
+                        if (keepAlive) "已开启 — 通知栏显示「定时签到运行中」，清理后台也不影响签到"
+                        else "已关闭 — 清理后台后定时签到会失效"
+                    )
+                },
+                leadingContent = {
+                    Icon(
+                        if (keepAlive) Icons.Filled.Shield else Icons.Filled.Shield,
+                        contentDescription = null,
+                        tint = if (keepAlive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                trailingContent = {
+                    Switch(
+                        checked = keepAlive,
+                        onCheckedChange = {
+                            keepAlive = it
+                            SettingsManager.setKeepAliveEnabled(context, it)
+                            if (it) {
+                                KeepAliveService.start(context)
+                            } else {
+                                KeepAliveService.stop(context)
+                            }
+                        }
+                    )
+                }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
             // 闹钟权限状态
             val canSchedule = remember {
