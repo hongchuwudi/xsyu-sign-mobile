@@ -42,6 +42,42 @@ fun HomeScreen(
     var recentLogs by remember { mutableStateOf<List<SignLog>>(emptyList()) }
     var isSigning by remember { mutableStateOf(false) }
     var showSetupGuide by remember { mutableStateOf(SettingsManager.isShowGuide(context)) }
+    var showStarDialog by remember { mutableStateOf(SettingsManager.isFirstLaunch(context)) }
+
+    // 首次启动弹窗：求 Star
+    if (showStarDialog) {
+        AlertDialog(
+            onDismissRequest = { showStarDialog = false },
+            icon = { Icon(Icons.Filled.Code, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            title = { Text("hongchu-sign", fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("本项目完全开源，代码托管在 GitHub。")
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "github.com/hongchuwudi/xsyu-sign-mobile",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text("如果对你有帮助，欢迎给个 Star ⭐")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showStarDialog = false
+                    val intent = android.content.Intent(
+                        android.content.Intent.ACTION_VIEW,
+                        android.net.Uri.parse("https://github.com/hongchuwudi/xsyu-sign-mobile")
+                    )
+                    context.startActivity(intent)
+                }) { Text("去 Star") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showStarDialog = false }) { Text("稍后") }
+            }
+        )
+    }
 
     LaunchedEffect(Unit) {
         userRepo.observeAll().collect { users = it }

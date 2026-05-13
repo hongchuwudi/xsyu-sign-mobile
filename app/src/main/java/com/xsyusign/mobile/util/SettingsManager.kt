@@ -8,6 +8,7 @@ object SettingsManager {
     private const val NAME = "hongchu_sign_prefs"
     private const val KEY_NOTIFICATION = "notification_enabled"
     private const val KEY_SHOW_GUIDE = "show_battery_guide"
+    private const val KEY_FIRST_LAUNCH = "first_launch_done"
 
     private fun prefs(ctx: Context): SharedPreferences =
         ctx.applicationContext.getSharedPreferences(NAME, Context.MODE_PRIVATE)
@@ -27,4 +28,12 @@ object SettingsManager {
 
     fun setShowGuide(ctx: Context, show: Boolean) =
         prefs(ctx).edit().putBoolean(KEY_SHOW_GUIDE, show).apply()
+
+    /** 首次启动返回 true，调用后标记为已启动 */
+    fun isFirstLaunch(ctx: Context): Boolean {
+        val p = prefs(ctx)
+        if (p.getBoolean(KEY_FIRST_LAUNCH, false)) return false
+        p.edit().putBoolean(KEY_FIRST_LAUNCH, true).apply()
+        return true
+    }
 }
