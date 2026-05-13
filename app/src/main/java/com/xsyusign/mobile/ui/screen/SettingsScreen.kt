@@ -82,7 +82,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                 headlineContent = { Text("前台服务保活") },
                 supportingContent = {
                     Text(
-                        if (keepAlive) "已开启 — 通知栏显示「定时签到运行中」，清理后台也不影响签到"
+                        if (keepAlive) "已开启 — 通知栏有常驻通知。可在系统设置中隐藏：点下方「隐藏保活通知」"
                         else "已关闭 — 清理后台后定时签到会失效"
                     )
                 },
@@ -108,6 +108,20 @@ fun SettingsScreen(onBack: () -> Unit) {
                     )
                 }
             )
+
+            if (keepAlive) {
+                ListItem(
+                    headlineContent = { Text("隐藏保活通知") },
+                    supportingContent = { Text("跳转系统通知设置，关闭「保活服务」通道即可隐藏通知，不影响定时功能") },
+                    leadingContent = { Icon(Icons.Filled.VisibilityOff, contentDescription = null) },
+                    modifier = Modifier.clickable {
+                        val intent = android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                            putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        }
+                        context.startActivity(intent)
+                    }
+                )
+            }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
