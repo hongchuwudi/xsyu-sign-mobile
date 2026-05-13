@@ -1,0 +1,30 @@
+package com.xsyusign.mobile.util
+
+import android.content.Context
+import android.content.SharedPreferences
+
+object SettingsManager {
+
+    private const val NAME = "hongchu_sign_prefs"
+    private const val KEY_NOTIFICATION = "notification_enabled"
+    private const val KEY_SHOW_GUIDE = "show_battery_guide"
+
+    private fun prefs(ctx: Context): SharedPreferences =
+        ctx.applicationContext.getSharedPreferences(NAME, Context.MODE_PRIVATE)
+
+    var notificationEnabled: Boolean
+        get() = throw UnsupportedOperationException("需要 Context")
+        // use getNotificationEnabled(ctx) / setNotificationEnabled(ctx, value)
+
+    fun isNotificationEnabled(ctx: Context): Boolean =
+        prefs(ctx).getBoolean(KEY_NOTIFICATION, true)
+
+    fun setNotificationEnabled(ctx: Context, enabled: Boolean) =
+        prefs(ctx).edit().putBoolean(KEY_NOTIFICATION, enabled).apply()
+
+    fun isShowGuide(ctx: Context): Boolean =
+        prefs(ctx).getBoolean(KEY_SHOW_GUIDE, true)
+
+    fun setShowGuide(ctx: Context, show: Boolean) =
+        prefs(ctx).edit().putBoolean(KEY_SHOW_GUIDE, show).apply()
+}
