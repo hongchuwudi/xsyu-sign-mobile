@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.xsyusign.mobile.util.SettingsManager
+import com.xsyusign.mobile.worker.SignAlarmReceiver
 import com.xsyusign.mobile.worker.TestAlarmReceiver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -74,6 +75,25 @@ fun SettingsScreen(onBack: () -> Unit) {
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             Text("定时任务", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+
+            // 闹钟权限状态
+            val canSchedule = remember {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                    val am = context.getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
+                    am.canScheduleExactAlarms()
+                } else true
+            }
+            if (!canSchedule) {
+                ListItem(
+                    headlineContent = { Text("闹钟权限未开启", color = MaterialTheme.colorScheme.error) },
+                    supportingContent = { Text("定时签到需要此权限，点击前往系统设置开启") },
+                    leadingContent = { Icon(Icons.Filled.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                    modifier = Modifier.clickable {
+                        SignAlarmReceiver.openAlarmSettings(context)
+                    }
+                )
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+            }
 
             var isTesting by remember { mutableStateOf(false) }
             val scope = rememberCoroutineScope()

@@ -18,12 +18,17 @@ class App : Application(), Configuration.Provider {
         WorkManager.initialize(this, workManagerConfiguration)
 
         // 启动周期签到巡检
-        WorkerScheduler.startPeriodicCheck(this)
-        Log.i("hongchu-sign", "App 启动 — 定时签到巡检已调度")
-
-        // Toast 确认，用户可知调度是否生效
-        Handler(Looper.getMainLooper()).post {
-            Toast.makeText(this, "定时签到已启动", Toast.LENGTH_SHORT).show()
+        val err = WorkerScheduler.startPeriodicCheck(this)
+        if (err != null) {
+            Log.e("hongchu-sign", "定时签到调度失败: $err")
+            Handler(Looper.getMainLooper()).post {
+                Toast.makeText(this, "定时签到失败: $err", Toast.LENGTH_LONG).show()
+            }
+        } else {
+            Log.i("hongchu-sign", "App 启动 — 定时签到巡检已调度")
+            Handler(Looper.getMainLooper()).post {
+                Toast.makeText(this, "定时签到已启动", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 

@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -22,32 +23,51 @@ class SignAlarmReceiver : BroadcastReceiver() {
         private const val ACTION_SIGN = "com.xsyusign.mobile.SIGN_ALARM"
         private const val INTERVAL_MS = 15 * 60 * 1000L // 15 分钟
 
-        /** 调度下一次闹钟 */
-        fun scheduleNext(context: Context) {
+        /** 检查是否有精确闹钟权限（Android 12+） */
+        fun canScheduleExactAlarms(context: Context): Boolean {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            val intent = Intent(context, SignAlarmReceiver::class.java).apply {
-                action = ACTION_SIGN
-            }
-            val pendingIntent = PendingIntent.getBroadcast(
-                context, 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
+            return alarmManager.canScheduleExactAlarms()
+        }
 
-            val triggerTime = System.currentTimeMillis() + INTERVAL_MS
-            try {
+        /** 跳转到系统闹钟权限设置页 */
+        fun openAlarmSettings(context: Context) {
+            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                data = android.net.Uri.parse("package:${context.packageName}")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        }
+
+        /** 调度下一次闹钟，返回 null=成功，否则返回错误信息 */
+        fun scheduleNext(context: Context): String? {
+            return try {
+                val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+                // Android 12+ 检查精确闹钟权限
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+                    return "需要「闹钟和提醒」权限，请点击前往设置开启"
+                }
+
+                val intent = Intent(context, SignAlarmReceiver::class.java).apply {
+                    action = ACTION_SIGN
+                }
+                val pendingIntent = PendingIntent.getBroadcast(
+                    context, 0, intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+
+                val triggerTime = System.currentTimeMillis() + INTERVAL_MS
                 alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent
                 )
+                Log.i(TAG, "下次签到已预约: ${triggerTime}")
+                null
             } catch (e: SecurityException) {
-                try {
-                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
-                } catch (e2: Exception) {
-                    Log.e(TAG, "无法调度闹钟", e2)
-                }
+                "权限不足: ${e.message}"
             } catch (e: Exception) {
-                Log.e(TAG, "调度闹钟失败", e)
+                "调度失败: ${e.message}"
             }
-            Log.i(TAG, "下次签到已预约: ${triggerTime}")
         }
 
         /** 取消所有已调度的闹钟 */

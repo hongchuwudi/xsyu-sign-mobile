@@ -13,10 +13,9 @@ object WorkerScheduler {
 
     private const val TAG = "WorkerScheduler"
 
-    /** 启动周期签到巡检（AlarmManager 自循环） */
-    fun startPeriodicCheck(context: Context) {
-        SignAlarmReceiver.scheduleNext(context)
-        Log.i(TAG, "周期签到巡检已启动 (AlarmManager, interval=15min)")
+    /** 启动周期签到巡检（AlarmManager 自循环），返回 null=成功 */
+    fun startPeriodicCheck(context: Context): String? {
+        return SignAlarmReceiver.scheduleNext(context)
     }
 
     /** 取消周期签到巡检 */
