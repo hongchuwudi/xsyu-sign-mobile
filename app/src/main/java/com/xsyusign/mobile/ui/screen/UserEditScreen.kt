@@ -57,7 +57,7 @@ fun UserEditScreen(
                 name = user.name
                 autoSign = user.autoSign
                 selectedDays = user.signDays.split(",").mapNotNull { it.trim().toIntOrNull() }.toSet()
-                signTime = user.signStartTime
+                signTime = midpointTime(user.signStartTime, user.signEndTime)
                 // 密码解密
                 val decrypted = CryptoUtil.decrypt(user.password)
                 if (decrypted != null) password = decrypted
@@ -329,6 +329,18 @@ fun UserEditScreen(
             }
         }
     }
+}
+
+/** 从窗口反推原始时间点（取中值） */
+private fun midpointTime(start: String, end: String): String {
+    val s = start.split(":").mapNotNull { it.toIntOrNull() }
+    val e = end.split(":").mapNotNull { it.toIntOrNull() }
+    if (s.size != 2 || e.size != 2) return start
+    var sm = s[0] * 60 + s[1]
+    var em = e[0] * 60 + e[1]
+    if (em < sm) em += 1440  // 跨午夜
+    val mid = (sm + em) / 2 % 1440
+    return String.format("%02d:%02d", mid / 60, mid % 60)
 }
 
 /** 给定签到时间点，返回 ±15 分钟的窗口 (start, end) */
