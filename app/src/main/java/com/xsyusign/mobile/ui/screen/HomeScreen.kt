@@ -43,6 +43,7 @@ fun HomeScreen(
     var isSigning by remember { mutableStateOf(false) }
     var showSetupGuide by remember { mutableStateOf(SettingsManager.isShowGuide(context)) }
     var showStarDialog by remember { mutableStateOf(SettingsManager.isFirstLaunch(context)) }
+    var logDialogUser by remember { mutableStateOf<User?>(null) }
 
     // 首次启动弹窗：求 Star
     if (showStarDialog) {
@@ -76,6 +77,15 @@ fun HomeScreen(
             dismissButton = {
                 TextButton(onClick = { showStarDialog = false }) { Text("稍后") }
             }
+        )
+    }
+
+    // 用户日志弹窗
+    logDialogUser?.let { user ->
+        UserLogDialog(
+            user = user,
+            logRepo = logRepo,
+            onDismiss = { logDialogUser = null }
         )
     }
 
@@ -215,7 +225,7 @@ fun HomeScreen(
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
                             )
                             Spacer(Modifier.height(10.dp))
-                            SetupStep("1", "电池优化 → 设为「无限制」", "设置 → 应用 → 西石大签到 → 电池")
+                            SetupStep("1", "电池优化 → 设为「无限制」", "设置 → 应用 → hongchu-sign → 电池")
                             Spacer(Modifier.height(6.dp))
                             SetupStep("2", "启动管理 → 开启「自启动」", "设置 → 应用 → 启动管理 → 允许")
                             Spacer(Modifier.height(6.dp))
@@ -260,7 +270,19 @@ fun HomeScreen(
                 }
             } else {
                 items(users) { user ->
-                    UserCard(user, onClick = { onNavigateToUsers() })
+                    UserCard(
+                        user = user,
+                        onClick = { logDialogUser = user },
+                        onToggleAuto = {
+                            scope.launch {
+                                val updated = user.copy(
+                                    autoSign = !user.autoSign,
+                                    updatedAt = System.currentTimeMillis()
+                                )
+                                userRepo.update(updated)
+                            }
+                        }
+                    )
                 }
             }
 
@@ -283,7 +305,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun UserCard(user: User, onClick: () -> Unit) {
+private fun UserCard(user: User, onClick: () -> Unit, onToggleAuto: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -314,7 +336,7 @@ private fun UserCard(user: User, onClick: () -> Unit) {
                 )
             }
             AssistChip(
-                onClick = {},
+                onClick = onToggleAuto,
                 label = {
                     Text(if (user.autoSign) "自动" else "手动", style = MaterialTheme.typography.labelLarge)
                 },
@@ -353,6 +375,63 @@ private fun SetupStep(num: String, title: String, desc: String) {
             )
         }
     }
+}
+
+@Composable
+private fun UserLogDialog(
+    user: User,
+    logRepo: SignLogRepository,
+    onDismiss: () -> Unit
+) {
+    var logs by remember { mutableStateOf<List<SignLog>>(emptyList()) }
+
+    LaunchedEffect(user.id) {
+        logRepo.observeByUser(user.id, 10).collect { logs = it }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(user.name.ifEmpty { user.username }, fontWeight = FontWeight.Bold)
+        },
+        text = {
+            if (logs.isEmpty()) {
+                Text("暂无签到记录", style = MaterialTheme.typography.bodyMedium)
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    logs.forEach { log ->
+                        val dateFormat = DateTimeFormatter.ofPattern("MM-dd HH:mm")
+                        val isSuccess = log.result.contains("成功")
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                if (isSuccess) Icons.Filled.CheckCircle else Icons.Filled.ErrorOutline,
+                                contentDescription = null,
+                                tint = if (isSuccess) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    log.signTitle.ifEmpty { log.result },
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Text(
+                                    java.time.LocalDateTime.ofInstant(
+                                        Instant.ofEpochMilli(log.createdAt), ZoneId.systemDefault()
+                                    ).format(dateFormat),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("关闭") }
+        }
+    )
 }
 
 @Composable

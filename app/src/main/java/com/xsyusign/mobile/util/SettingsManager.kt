@@ -13,10 +13,6 @@ object SettingsManager {
     private fun prefs(ctx: Context): SharedPreferences =
         ctx.applicationContext.getSharedPreferences(NAME, Context.MODE_PRIVATE)
 
-    var notificationEnabled: Boolean
-        get() = throw UnsupportedOperationException("需要 Context")
-        // use getNotificationEnabled(ctx) / setNotificationEnabled(ctx, value)
-
     fun isNotificationEnabled(ctx: Context): Boolean =
         prefs(ctx).getBoolean(KEY_NOTIFICATION, true)
 

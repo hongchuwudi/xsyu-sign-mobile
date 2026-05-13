@@ -86,6 +86,44 @@ fun SettingsScreen(onBack: () -> Unit) {
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
+            Text("网页版", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://xsyusign.hongchu.xyz"))
+                        context.startActivity(intent)
+                    }
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.Language, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.width(8.dp))
+                        Text("xsyusign.hongchu.xyz", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    Row {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("✅ 全自动托管", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                            Text("✅ 无需手机在线", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                            Text("✅ 无需任何配置", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                            Text("⚠ 账户需交给 hongchu 保管", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                        }
+                        Spacer(Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("✅ 账户本地存储", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                            Text("✅ 数据不上传服务器", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                            Text("⚠ 需自己配置签到计划", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                            Text("⚠ 手机需保持开机", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
             Text("关于", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
             Card(

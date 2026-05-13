@@ -88,7 +88,7 @@ class SignWorker(
             else -> {
                 // 自动巡检：筛选开启自动签到且当前在窗口内的用户
                 val now = Calendar.getInstance()
-                val dayOfWeek = ((now.get(Calendar.DAY_OF_WEEK) + 5) % 7).toString()
+                val dayOfWeek = (now.get(Calendar.DAY_OF_WEEK) - 1).toString()
                 val currentTime = String.format("%02d:%02d", now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE))
 
                 userRepo.getAutoSignUsers().filter { user ->
