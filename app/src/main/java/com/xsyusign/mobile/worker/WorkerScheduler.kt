@@ -6,29 +6,22 @@ import androidx.work.*
 import java.util.concurrent.TimeUnit
 
 /**
- * WorkManager 任务调度器 — 启动 / 取消周期巡检。
+ * 签到任务调度器。
+ * 定时签到使用 AlarmManager 自循环（进程被杀也能恢复），手动签到使用 WorkManager。
  */
 object WorkerScheduler {
 
     private const val TAG = "WorkerScheduler"
-    private const val PERIODIC_WORK_NAME = "sign_periodic_check"
 
-    /** 启动周期签到巡检（每 15 分钟） */
+    /** 启动周期签到巡检（AlarmManager 自循环） */
     fun startPeriodicCheck(context: Context) {
-        val workManager = WorkManager.getInstance(context)
-        val request = SignWorker.periodicRequest()
-
-        workManager.enqueueUniquePeriodicWork(
-            PERIODIC_WORK_NAME,
-            androidx.work.ExistingPeriodicWorkPolicy.UPDATE,
-            request
-        )
-        Log.i(TAG, "周期签到巡检已启动 (interval=15min)")
+        SignAlarmReceiver.scheduleNext(context)
+        Log.i(TAG, "周期签到巡检已启动 (AlarmManager, interval=15min)")
     }
 
     /** 取消周期签到巡检 */
     fun cancelPeriodicCheck(context: Context) {
-        WorkManager.getInstance(context).cancelUniqueWork(PERIODIC_WORK_NAME)
+        SignAlarmReceiver.cancel(context)
         Log.d(TAG, "周期签到巡检已取消")
     }
 
@@ -42,12 +35,10 @@ object WorkerScheduler {
     /** 立即为所有用户执行签到（无视自动签到设置） */
     fun signAllNow(context: Context) {
         val workManager = WorkManager.getInstance(context)
-        val request = SignWorker.oneTimeRequest().let { builder ->
-            OneTimeWorkRequestBuilder<SignWorker>()
-                .setInputData(workDataOf("sign_all" to true))
-                .addTag("sign_manual")
-                .build()
-        }
+        val request = OneTimeWorkRequestBuilder<SignWorker>()
+            .setInputData(workDataOf("sign_all" to true))
+            .addTag("sign_manual")
+            .build()
         workManager.enqueue(request)
     }
 }
