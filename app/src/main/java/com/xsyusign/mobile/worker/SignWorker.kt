@@ -95,7 +95,15 @@ class SignWorker(
                 val dayOfWeek = (now.get(Calendar.DAY_OF_WEEK) - 1).toString()
                 val currentTime = String.format("%02d:%02d", now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE))
 
-                userRepo.getAutoSignUsers().filter { user ->
+                val allAutoUsers = userRepo.getAutoSignUsers()
+                Log.d("XSYUSign", "巡检触发: 星期$dayOfWeek $currentTime, 自动签到用户数=${allAutoUsers.size}")
+                allAutoUsers.forEach { u ->
+                    val days = u.signDays.split(",").map { it.trim() }
+                    val dayOk = dayOfWeek in days
+                    val timeOk = currentTime >= u.signStartTime && currentTime <= u.signEndTime
+                    Log.d("XSYUSign", "  ${u.username}: dayIn=$dayOk(${days}) timeIn=$timeOk(${u.signStartTime}-${u.signEndTime}) autoSign=${u.autoSign}")
+                }
+                allAutoUsers.filter { user ->
                     val days = user.signDays.split(",").map { it.trim() }
                     dayOfWeek in days &&
                             currentTime >= user.signStartTime &&
@@ -104,6 +112,7 @@ class SignWorker(
             }
         }
 
+        Log.d("XSYUSign", "符合条件的用户数: ${users.size}")
         if (users.isEmpty()) return@withContext Result.success()
 
         for (user in users) {
