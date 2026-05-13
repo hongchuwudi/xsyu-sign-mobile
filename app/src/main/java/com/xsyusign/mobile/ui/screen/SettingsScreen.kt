@@ -119,6 +119,12 @@ fun SettingsScreen(onBack: () -> Unit) {
                             Text("⚠ 手机需保持开机", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                         }
                     }
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        "hongchu.xyz 域名到期后网页版将停止运营，届时请使用本 App 替代。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
