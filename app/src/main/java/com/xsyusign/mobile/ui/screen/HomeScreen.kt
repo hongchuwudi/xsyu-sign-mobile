@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -427,27 +429,33 @@ private fun UserLogDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        modifier = Modifier.fillMaxWidth(0.95f),
         title = {
-            Column {
-                Text(user.name.ifEmpty { user.username }, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(4.dp))
-                TabRow(selectedTabIndex = selectedTab) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(user.name.ifEmpty { user.username }, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(2.dp))
+                TabRow(selectedTabIndex = selectedTab, modifier = Modifier.fillMaxWidth()) {
                     Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }) {
-                        Text("本地日志", modifier = Modifier.padding(12.dp))
+                        Text("本地", modifier = Modifier.padding(vertical = 8.dp), style = MaterialTheme.typography.bodySmall)
                     }
                     Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }) {
-                        Text("服务器记录", modifier = Modifier.padding(12.dp))
+                        Text("服务器", modifier = Modifier.padding(vertical = 8.dp), style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
         },
         text = {
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 420.dp)
+                .verticalScroll(rememberScrollState())
+            ) {
             when (selectedTab) {
                 0 -> {
                     if (logs.isEmpty()) {
-                        Text("暂无本地日志", style = MaterialTheme.typography.bodyMedium)
+                        Text("暂无本地日志", style = MaterialTheme.typography.bodySmall)
                     } else {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             logs.forEach { log ->
                                 val dateFormat = DateTimeFormatter.ofPattern("MM-dd HH:mm")
                                 val isSuccess = log.result.contains("成功")
@@ -456,14 +464,14 @@ private fun UserLogDialog(
                                         if (isSuccess) Icons.Filled.CheckCircle else Icons.Filled.ErrorOutline,
                                         contentDescription = null,
                                         tint = if (isSuccess) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(16.dp)
                                     )
-                                    Spacer(Modifier.width(8.dp))
+                                    Spacer(Modifier.width(6.dp))
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(log.signTitle.ifEmpty { log.result }, style = MaterialTheme.typography.bodySmall)
                                         Text(
                                             java.time.LocalDateTime.ofInstant(Instant.ofEpochMilli(log.createdAt), ZoneId.systemDefault()).format(dateFormat),
-                                            style = MaterialTheme.typography.bodySmall,
+                                            style = MaterialTheme.typography.labelLarge,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
@@ -476,13 +484,13 @@ private fun UserLogDialog(
                     when {
                         isLoading -> {
                             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                                CircularProgressIndicator(modifier = Modifier.size(28.dp))
                             }
                         }
-                        loadError != null -> Text("加载失败: $loadError", color = MaterialTheme.colorScheme.error)
-                        serverItems.isEmpty() -> Text("服务器无签到记录")
+                        loadError != null -> Text("加载失败: $loadError", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        serverItems.isEmpty() -> Text("服务器无签到记录", style = MaterialTheme.typography.bodySmall)
                         else -> {
-                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 serverItems.take(10).forEach { item ->
                                     val isSigned = item.signStatus == 2
                                     val startStr = item.start?.let { ts ->
@@ -506,16 +514,16 @@ private fun UserLogDialog(
                                         shape = MaterialTheme.shapes.small
                                     ) {
                                         Row(
-                                            modifier = Modifier.padding(10.dp),
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Icon(
                                                 if (isSigned) Icons.Filled.CheckCircle else Icons.Filled.Schedule,
                                                 contentDescription = null,
                                                 tint = if (isSigned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                                                modifier = Modifier.size(18.dp)
+                                                modifier = Modifier.size(16.dp)
                                             )
-                                            Spacer(Modifier.width(8.dp))
+                                            Spacer(Modifier.width(6.dp))
                                             Column(modifier = Modifier.weight(1f)) {
                                                 Text(
                                                     item.signTitle ?: "签到任务",
@@ -523,27 +531,28 @@ private fun UserLogDialog(
                                                     fontWeight = if (isSigned) FontWeight.Bold else FontWeight.Normal,
                                                     maxLines = 1
                                                 )
-                                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                                     Text(
                                                         if (isSigned) "✅已签" else "⏳未签",
-                                                        style = MaterialTheme.typography.labelLarge
+                                                        fontSize = MaterialTheme.typography.labelLarge.fontSize
                                                     )
                                                     if (startStr.isNotEmpty() && endStr.isNotEmpty()) {
                                                         Text(
                                                             "$startStr-$endStr",
-                                                            style = MaterialTheme.typography.labelLarge,
+                                                            fontSize = MaterialTheme.typography.labelLarge.fontSize,
                                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                                         )
                                                     }
                                                 }
                                                 if (dateStr.isNotEmpty()) {
-                                                    Text(dateStr, style = MaterialTheme.typography.labelLarge,
+                                                    Text(dateStr,
+                                                        fontSize = MaterialTheme.typography.labelLarge.fontSize,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                                                 }
                                                 if (area.isNotEmpty()) {
                                                     Text(
-                                                        "📍 $area",
-                                                        style = MaterialTheme.typography.labelLarge,
+                                                        "📍$area",
+                                                        fontSize = MaterialTheme.typography.labelLarge.fontSize,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                         maxLines = 1
                                                     )
@@ -557,9 +566,10 @@ private fun UserLogDialog(
                     }
                 }
             }
+            }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("关闭") }
+            TextButton(onClick = onDismiss) { Text("关闭", style = MaterialTheme.typography.bodySmall) }
         }
     )
 }
