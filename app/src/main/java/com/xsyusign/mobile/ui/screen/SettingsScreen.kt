@@ -101,7 +101,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                 headlineContent = { Text("测试定时任务") },
                 supportingContent = {
                     Text(
-                        if (isTesting) "30 秒后将收到通知…" else "点击运行后清理后台，30 秒后看通知栏是否有消息"
+                        if (isTesting) "30 秒后将收到通知…" else "保持 App 前台，30 秒后应收到通知（清后台无效）"
                     )
                 },
                 leadingContent = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
@@ -119,7 +119,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                                 if (err != null) {
                                     Toast.makeText(context, "调度失败: $err", Toast.LENGTH_LONG).show()
                                 } else {
-                                    Toast.makeText(context, "已调度，请清理后台后等待 30 秒，查看通知栏是否有消息", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, "已调度，保持 App 前台，30 秒后应收到通知", Toast.LENGTH_LONG).show()
                                 }
                             }
                         }) { Text("运行") }

@@ -230,18 +230,19 @@ fun HomeScreen(
                             }
                             Spacer(Modifier.height(8.dp))
                             Text(
-                                "定时签到依赖系统后台调度，请完成以下设置防止被清理：",
+                                "⚠ 国产手机清理后台后无法执行任何定时任务，这是系统限制。请：",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.error
                             )
                             Spacer(Modifier.height(10.dp))
-                            SetupStep("1", "电池优化 → 设为「无限制」", "设置 → 应用 → hongchu-sign → 电池")
+                            SetupStep("1", "不要在多任务界面划掉本 App", "退到后台即可，系统不会主动杀")
                             Spacer(Modifier.height(6.dp))
-                            SetupStep("2", "启动管理 → 开启「自启动」", "设置 → 应用 → 启动管理 → 允许")
+                            SetupStep("2", "电池优化 → 设为「无限制」", "设置 → 应用 → hongchu-sign → 电池")
                             Spacer(Modifier.height(6.dp))
-                            SetupStep("3", "多任务界面 → 锁定应用", "划出多任务 → 长按本应用 → 锁定")
+                            SetupStep("3", "启动管理 → 开启「自启动」", "关机重启后自动恢复定时")
                             Spacer(Modifier.height(6.dp))
-                            SetupStep("4", "设置完成后，去「设置 → 测试定时任务」验证", "点击运行按钮，查看是否收到签到通知")
+                            SetupStep("4", "去「设置 → 测试定时任务」验证", "保持前台 30 秒，看是否收到通知")
                         }
                     }
                 }
