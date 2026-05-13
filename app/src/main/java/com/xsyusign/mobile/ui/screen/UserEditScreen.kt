@@ -41,8 +41,7 @@ fun UserEditScreen(
     var name by remember { mutableStateOf("") }
     var autoSign by remember { mutableStateOf(false) }
     var selectedDays by remember { mutableStateOf(setOf(1, 2, 3, 4, 5)) }
-    var signStartTime by remember { mutableStateOf("18:30") }
-    var signEndTime by remember { mutableStateOf("22:00") }
+    var signTime by remember { mutableStateOf("18:30") }
     var isSaving by remember { mutableStateOf(false) }
     var isTesting by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -58,8 +57,7 @@ fun UserEditScreen(
                 name = user.name
                 autoSign = user.autoSign
                 selectedDays = user.signDays.split(",").mapNotNull { it.trim().toIntOrNull() }.toSet()
-                signStartTime = user.signStartTime
-                signEndTime = user.signEndTime
+                signTime = user.signStartTime
                 // 密码解密
                 val decrypted = CryptoUtil.decrypt(user.password)
                 if (decrypted != null) password = decrypted
@@ -236,36 +234,20 @@ fun UserEditScreen(
                 }
             }
 
-            // 时间范围 — 自动过滤非法字符
-            Row(
+            // 签到时间点 — 内部自动 ±15 分钟容错窗口
+            OutlinedTextField(
+                value = signTime,
+                onValueChange = { v ->
+                    val filtered = v.replace('：', ':').filter { it.isDigit() || it == ':' }.take(5)
+                    signTime = filtered
+                },
+                label = { Text("签到时间") },
+                supportingText = { Text("系统会在此时前后 15 分钟内执行签到") },
+                singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                OutlinedTextField(
-                    value = signStartTime,
-                    onValueChange = { v ->
-                        val filtered = v.replace('：', ':').filter { it.isDigit() || it == ':' }.take(5)
-                        signStartTime = filtered
-                    },
-                    label = { Text("开始时间") },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text("18:30") },
-                    isError = signStartTime.isNotEmpty() && !signStartTime.matches(Regex("\\d{2}:\\d{2}"))
-                )
-                OutlinedTextField(
-                    value = signEndTime,
-                    onValueChange = { v ->
-                        val filtered = v.replace('：', ':').filter { it.isDigit() || it == ':' }.take(5)
-                        signEndTime = filtered
-                    },
-                    label = { Text("结束时间") },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text("22:00") },
-                    isError = signEndTime.isNotEmpty() && !signEndTime.matches(Regex("\\d{2}:\\d{2}"))
-                )
-            }
+                placeholder = { Text("18:30") },
+                isError = signTime.isNotEmpty() && !signTime.matches(Regex("\\d{2}:\\d{2}"))
+            )
 
             Spacer(Modifier.height(16.dp))
 
@@ -277,6 +259,8 @@ fun UserEditScreen(
                     isSaving = true
                     scope.launch {
                         val encrypted = CryptoUtil.encrypt(password)
+                        // 根据签到时间点计算 ±15 分钟窗口
+                        val (startTime, endTime) = expandTimeWindow(signTime)
                         val user = if (isEdit) {
                             val existing = userRepo.getById(userId!!) ?: return@launch
                             existing.copy(
@@ -285,8 +269,8 @@ fun UserEditScreen(
                                 name = name,
                                 autoSign = autoSign,
                                 signDays = selectedDays.sorted().joinToString(","),
-                                signStartTime = signStartTime,
-                                signEndTime = signEndTime,
+                                signStartTime = startTime,
+                                signEndTime = endTime,
                                 updatedAt = System.currentTimeMillis()
                             )
                         } else {
@@ -296,8 +280,8 @@ fun UserEditScreen(
                                 name = name,
                                 autoSign = autoSign,
                                 signDays = selectedDays.sorted().joinToString(","),
-                                signStartTime = signStartTime,
-                                signEndTime = signEndTime
+                                signStartTime = startTime,
+                                signEndTime = endTime
                             )
                         }
 
@@ -345,4 +329,15 @@ fun UserEditScreen(
             }
         }
     }
+}
+
+/** 给定签到时间点，返回 ±15 分钟的窗口 (start, end) */
+private fun expandTimeWindow(time: String): Pair<String, String> {
+    val parts = time.split(":").mapNotNull { it.toIntOrNull() }
+    if (parts.size != 2) return (time to time)
+    val totalMinutes = parts[0] * 60 + parts[1]
+    val start = ((totalMinutes - 15 + 1440) % 1440)
+    val end = ((totalMinutes + 15) % 1440)
+    return (String.format("%02d:%02d", start / 60, start % 60) to
+            String.format("%02d:%02d", end / 60, end % 60))
 }

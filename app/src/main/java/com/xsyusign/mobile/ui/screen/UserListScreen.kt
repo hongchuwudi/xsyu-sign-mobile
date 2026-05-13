@@ -191,7 +191,7 @@ private fun UserDetailCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "${user.signStartTime} - ${user.signEndTime}",
+                    "签到 ${user.signStartTime}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
