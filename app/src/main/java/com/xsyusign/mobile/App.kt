@@ -7,8 +7,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.work.Configuration
 import androidx.work.WorkManager
-import com.xsyusign.mobile.util.SettingsManager
-import com.xsyusign.mobile.worker.KeepAliveService
 import com.xsyusign.mobile.worker.WorkerScheduler
 
 class App : Application(), Configuration.Provider {
@@ -22,10 +20,6 @@ class App : Application(), Configuration.Provider {
         // 启动 WorkManager 周期签到巡检
         WorkerScheduler.startPeriodicCheck(this)
         Log.i("hongchu-sign", "App 启动 — WorkManager 周期签到已调度")
-
-        // 前台保活服务默认启动
-        KeepAliveService.start(this)
-        Log.i("hongchu-sign", "前台保活服务已启动")
 
         Handler(Looper.getMainLooper()).post {
             Toast.makeText(this, "定时签到已启动", Toast.LENGTH_SHORT).show()

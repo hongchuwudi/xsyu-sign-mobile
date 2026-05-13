@@ -78,26 +78,6 @@ fun SettingsScreen(onBack: () -> Unit) {
 
             Text("定时任务", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
-            ListItem(
-                headlineContent = { Text("前台服务保活") },
-                supportingContent = { Text("已开启 — 通知栏显示「定时签到运行中」，清理后台也不影响签到") },
-                leadingContent = { Icon(Icons.Filled.Shield, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
-            )
-
-            ListItem(
-                headlineContent = { Text("隐藏保活通知") },
-                supportingContent = { Text("跳转系统通知设置，关闭「保活服务」通道即可隐藏通知，不影响定时") },
-                leadingContent = { Icon(Icons.Filled.VisibilityOff, contentDescription = null) },
-                modifier = Modifier.clickable {
-                    val intent = Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                        putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
-                    }
-                    context.startActivity(intent)
-                }
-            )
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
             // 闹钟权限状态
             val canSchedule = remember {
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
@@ -122,7 +102,7 @@ fun SettingsScreen(onBack: () -> Unit) {
             ListItem(
                 headlineContent = { Text("测试定时任务") },
                 supportingContent = {
-                    Text(if (isTesting) "30 秒后将收到通知…" else "保持前台 30 秒，验证定时是否正常")
+                    Text(if (isTesting) "30 秒后将收到通知…" else "请勿清理后台，保持 App 运行 30 秒后查看通知")
                 },
                 leadingContent = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
                 trailingContent = {
@@ -139,7 +119,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                                 if (err != null) {
                                     Toast.makeText(context, "调度失败: $err", Toast.LENGTH_LONG).show()
                                 } else {
-                                    Toast.makeText(context, "已调度，30 秒后查看通知栏", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, "已调度，请不要清理后台，30 秒后查看通知", Toast.LENGTH_LONG).show()
                                 }
                             }
                         }) { Text("运行") }

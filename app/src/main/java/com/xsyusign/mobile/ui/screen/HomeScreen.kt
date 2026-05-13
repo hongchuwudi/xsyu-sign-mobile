@@ -230,19 +230,19 @@ fun HomeScreen(
                             }
                             Spacer(Modifier.height(8.dp))
                             Text(
-                                "⚠ OPPO/小米清理后台会连前台服务一起杀掉，请务必锁定 App：",
+                                "国产手机为省电会冻结后台 App，清理多任务 = 明确告诉系统「关掉它」，" +
+                                "任何 App（包括微信）也无法绕过。唯一方案：",
                                 style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.error
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
                             )
                             Spacer(Modifier.height(10.dp))
-                            SetupStep("1", "多任务界面 → 锁定本 App", "划出多任务 → 长按卡片 → 点锁定图标（最关键！）")
+                            SetupStep("1", "多任务界面 → 锁定本 App", "划出多任务 → 长按卡片 → 点 🔒（最关键！锁一次永久有效）")
                             Spacer(Modifier.height(6.dp))
                             SetupStep("2", "电池优化 → 设为「无限制」", "设置 → 应用 → hongchu-sign → 电池")
                             Spacer(Modifier.height(6.dp))
                             SetupStep("3", "启动管理 → 开启「自启动」", "关机重启后自动恢复定时")
                             Spacer(Modifier.height(6.dp))
-                            SetupStep("4", "去「设置 → 测试定时任务」验证", "点运行后等 30 秒，看通知")
+                            SetupStep("4", "⚠ 不要在多任务中划掉本 App", "锁定后即使清理其他 App，本 App 也不会被清")
                         }
                     }
                 }

@@ -14,7 +14,6 @@ class BootReceiver : BroadcastReceiver() {
         if (Intent.ACTION_BOOT_COMPLETED == intent?.action) {
             Log.i("XSYUSign-Boot", "开机完成，恢复签到调度")
             WorkerScheduler.startPeriodicCheck(context)
-            KeepAliveService.start(context)
         }
     }
 }
