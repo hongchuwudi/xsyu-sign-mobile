@@ -230,8 +230,8 @@ fun HomeScreen(
                             }
                             Spacer(Modifier.height(8.dp))
                             Text(
-                                "国产手机为省电会冻结后台 App，清理多任务 = 明确告诉系统「关掉它」，" +
-                                "任何 App（包括微信）也无法绕过。唯一方案：",
+                                "清理多任务会杀掉所有 App 的后台任务（包括 QQ、微信的本地定时——" +
+                                "它们的消息推送是靠厂商服务器端 Push 通道，和本地定时完全是两回事）。唯一方案：",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
                             )
