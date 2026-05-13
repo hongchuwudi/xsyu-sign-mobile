@@ -587,11 +587,12 @@ private fun LogItem(log: SignLog) {
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val isSuccess = log.result.contains("成功")
+            val isWarning = !isSuccess && log.result.contains("无可签")
             Icon(
-                if (log.result.contains("成功")) Icons.Filled.CheckCircle else Icons.Filled.Error,
+                when { isSuccess -> Icons.Filled.CheckCircle; isWarning -> Icons.Filled.Warning; else -> Icons.Filled.Error },
                 contentDescription = null,
-                tint = if (log.result.contains("成功")) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.error,
+                tint = when { isSuccess -> MaterialTheme.colorScheme.primary; isWarning -> MaterialTheme.colorScheme.tertiary; else -> MaterialTheme.colorScheme.error },
                 modifier = Modifier.size(20.dp)
             )
             Spacer(Modifier.width(8.dp))

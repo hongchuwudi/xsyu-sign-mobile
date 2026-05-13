@@ -16,9 +16,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.work.WorkManager
 import com.xsyusign.mobile.util.SettingsManager
-import com.xsyusign.mobile.worker.TestWorker
+import com.xsyusign.mobile.worker.TestAlarmReceiver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -82,7 +81,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                 headlineContent = { Text("测试定时任务") },
                 supportingContent = {
                     Text(
-                        if (isTesting) "30 秒后将收到通知…" else "延迟 30 秒发送通知，验证手机是否允许后台定时任务"
+                        if (isTesting) "30 秒后将收到通知…" else "点击运行后清理后台，30 秒后看通知栏是否有消息"
                     )
                 },
                 leadingContent = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
@@ -94,10 +93,10 @@ fun SettingsScreen(onBack: () -> Unit) {
                             isTesting = true
                             scope.launch {
                                 withContext(Dispatchers.IO) {
-                                    WorkManager.getInstance(context).enqueue(TestWorker.oneTimeRequest())
+                                    TestAlarmReceiver.schedule(context)
                                 }
                                 isTesting = false
-                                Toast.makeText(context, "已调度，30 秒后查看通知栏", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "已调度，请清理后台后等待 30 秒，查看通知栏是否有消息", Toast.LENGTH_LONG).show()
                             }
                         }) { Text("运行") }
                     }
