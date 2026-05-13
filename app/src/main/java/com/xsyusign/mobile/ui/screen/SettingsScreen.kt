@@ -74,6 +74,21 @@ fun SettingsScreen(onBack: () -> Unit) {
                 }
             )
 
+            ListItem(
+                headlineContent = { Text("首页保活引导") },
+                supportingContent = { Text("在首页显示锁定后台、电池优化等设置说明") },
+                leadingContent = { Icon(Icons.Filled.Info, contentDescription = null) },
+                trailingContent = {
+                    Switch(
+                        checked = showGuide,
+                        onCheckedChange = {
+                            showGuide = it
+                            SettingsManager.setShowGuide(context, it)
+                        }
+                    )
+                }
+            )
+
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             Text("定时任务", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -124,25 +139,6 @@ fun SettingsScreen(onBack: () -> Unit) {
                             }
                         }) { Text("运行") }
                     }
-                }
-            )
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-            Text("后台保活", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-
-            ListItem(
-                headlineContent = { Text("显示保活设置引导") },
-                supportingContent = { Text("在首页显示电池优化、自启动等设置说明") },
-                leadingContent = { Icon(Icons.Filled.Info, contentDescription = null) },
-                trailingContent = {
-                    Switch(
-                        checked = showGuide,
-                        onCheckedChange = {
-                            showGuide = it
-                            SettingsManager.setShowGuide(context, it)
-                        }
-                    )
                 }
             )
 
