@@ -5,6 +5,8 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -17,18 +19,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.xsyusign.mobile.util.SettingsManager
-import com.xsyusign.mobile.worker.KeepAliveService
 import com.xsyusign.mobile.worker.SignAlarmReceiver
 import com.xsyusign.mobile.worker.TestAlarmReceiver
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(onBack: () -> Unit) {
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     var notifyEnabled by remember { mutableStateOf(SettingsManager.isNotificationEnabled(context)) }
     var showGuide by remember { mutableStateOf(SettingsManager.isShowGuide(context)) }
 
@@ -53,6 +53,7 @@ fun SettingsScreen(onBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -77,51 +78,23 @@ fun SettingsScreen(onBack: () -> Unit) {
 
             Text("定时任务", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
-            var keepAlive by remember { mutableStateOf(SettingsManager.isKeepAliveEnabled(context)) }
             ListItem(
                 headlineContent = { Text("前台服务保活") },
-                supportingContent = {
-                    Text(
-                        if (keepAlive) "已开启 — 通知栏有常驻通知。可在系统设置中隐藏：点下方「隐藏保活通知」"
-                        else "已关闭 — 清理后台后定时签到会失效"
-                    )
-                },
-                leadingContent = {
-                    Icon(
-                        if (keepAlive) Icons.Filled.Shield else Icons.Filled.Shield,
-                        contentDescription = null,
-                        tint = if (keepAlive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                trailingContent = {
-                    Switch(
-                        checked = keepAlive,
-                        onCheckedChange = {
-                            keepAlive = it
-                            SettingsManager.setKeepAliveEnabled(context, it)
-                            if (it) {
-                                KeepAliveService.start(context)
-                            } else {
-                                KeepAliveService.stop(context)
-                            }
-                        }
-                    )
-                }
+                supportingContent = { Text("已开启 — 通知栏显示「定时签到运行中」，清理后台也不影响签到") },
+                leadingContent = { Icon(Icons.Filled.Shield, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
             )
 
-            if (keepAlive) {
-                ListItem(
-                    headlineContent = { Text("隐藏保活通知") },
-                    supportingContent = { Text("跳转系统通知设置，关闭「保活服务」通道即可隐藏通知，不影响定时功能") },
-                    leadingContent = { Icon(Icons.Filled.VisibilityOff, contentDescription = null) },
-                    modifier = Modifier.clickable {
-                        val intent = android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                            putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
-                        }
-                        context.startActivity(intent)
+            ListItem(
+                headlineContent = { Text("隐藏保活通知") },
+                supportingContent = { Text("跳转系统通知设置，关闭「保活服务」通道即可隐藏通知，不影响定时") },
+                leadingContent = { Icon(Icons.Filled.VisibilityOff, contentDescription = null) },
+                modifier = Modifier.clickable {
+                    val intent = Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                        putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
                     }
-                )
-            }
+                    context.startActivity(intent)
+                }
+            )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
@@ -149,9 +122,7 @@ fun SettingsScreen(onBack: () -> Unit) {
             ListItem(
                 headlineContent = { Text("测试定时任务") },
                 supportingContent = {
-                    Text(
-                        if (isTesting) "30 秒后将收到通知…" else "保持 App 前台，30 秒后应收到通知（清后台无效）"
-                    )
+                    Text(if (isTesting) "30 秒后将收到通知…" else "保持前台 30 秒，验证定时是否正常")
                 },
                 leadingContent = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
                 trailingContent = {
@@ -168,7 +139,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                                 if (err != null) {
                                     Toast.makeText(context, "调度失败: $err", Toast.LENGTH_LONG).show()
                                 } else {
-                                    Toast.makeText(context, "已调度，保持 App 前台，30 秒后应收到通知", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, "已调度，30 秒后查看通知栏", Toast.LENGTH_LONG).show()
                                 }
                             }
                         }) { Text("运行") }
@@ -203,8 +174,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://xsyusign.hongchu.xyz"))
-                        context.startActivity(intent)
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://xsyusign.hongchu.xyz")))
                     }
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -228,7 +198,6 @@ fun SettingsScreen(onBack: () -> Unit) {
                             Text("✅ 数据不上传服务器", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                             Text("⚠ 需自己配置签到计划", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                             Text("⚠ 手机需保持开机", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                            Text("⚠ 部分手机定时可能失效", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                         }
                     }
                     Spacer(Modifier.height(10.dp))
@@ -254,38 +223,26 @@ fun SettingsScreen(onBack: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/hongchuwudi/xsyu-sign-mobile"))
-                        context.startActivity(intent)
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/hongchuwudi/xsyu-sign-mobile")))
                     }
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        Icons.Filled.Code,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(32.dp)
-                    )
+                    Icon(Icons.Filled.Code, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
                     Spacer(Modifier.width(12.dp))
                     Column {
                         Text("开源地址", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                        Text(
-                            "github.com/hongchuwudi/xsyu-sign-mobile",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            textDecoration = TextDecoration.Underline
-                        )
+                        Text("github.com/hongchuwudi/xsyu-sign-mobile",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)
                         Spacer(Modifier.height(4.dp))
-                        Text(
-                            "如果觉得好用，欢迎给个 Star ⭐",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Text("如果觉得好用，欢迎给个 Star ⭐", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
+
+            Spacer(Modifier.height(16.dp))
         }
     }
 }

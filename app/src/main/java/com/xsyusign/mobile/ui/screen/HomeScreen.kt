@@ -230,19 +230,19 @@ fun HomeScreen(
                             }
                             Spacer(Modifier.height(8.dp))
                             Text(
-                                "⚠ 国产手机清理后台后无法执行任何定时任务，这是系统限制。请：",
+                                "⚠ OPPO/小米清理后台会连前台服务一起杀掉，请务必锁定 App：",
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.error
                             )
                             Spacer(Modifier.height(10.dp))
-                            SetupStep("1", "不要在多任务界面划掉本 App", "退到后台即可，系统不会主动杀")
+                            SetupStep("1", "多任务界面 → 锁定本 App", "划出多任务 → 长按卡片 → 点锁定图标（最关键！）")
                             Spacer(Modifier.height(6.dp))
                             SetupStep("2", "电池优化 → 设为「无限制」", "设置 → 应用 → hongchu-sign → 电池")
                             Spacer(Modifier.height(6.dp))
                             SetupStep("3", "启动管理 → 开启「自启动」", "关机重启后自动恢复定时")
                             Spacer(Modifier.height(6.dp))
-                            SetupStep("4", "去「设置 → 测试定时任务」验证", "保持前台 30 秒，看是否收到通知")
+                            SetupStep("4", "去「设置 → 测试定时任务」验证", "点运行后等 30 秒，看通知")
                         }
                     }
                 }

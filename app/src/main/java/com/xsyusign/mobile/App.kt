@@ -33,11 +33,9 @@ class App : Application(), Configuration.Provider {
             }
         }
 
-        // 如果用户开启了前台保活，启动服务
-        if (SettingsManager.isKeepAliveEnabled(this)) {
-            KeepAliveService.start(this)
-            Log.i("hongchu-sign", "前台保活服务已启动")
-        }
+        // 前台保活服务默认启动
+        KeepAliveService.start(this)
+        Log.i("hongchu-sign", "前台保活服务已启动")
     }
 
     override val workManagerConfiguration: Configuration
