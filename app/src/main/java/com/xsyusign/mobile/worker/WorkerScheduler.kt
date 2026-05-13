@@ -7,36 +7,21 @@ import java.util.concurrent.TimeUnit
 
 /**
  * 签到任务调度器。
- * 定时签到使用 WorkManager PeriodicWorkRequest（官方推荐），手动签到使用 OneTimeWorkRequest。
+ * 定时签到使用 AlarmManager 自循环（进程被杀也能恢复），手动签到使用 WorkManager。
  */
 object WorkerScheduler {
 
     private const val TAG = "WorkerScheduler"
-    private const val PERIODIC_NAME = "sign_periodic"
 
-    /** 启动周期签到巡检（WorkManager，每 15 分钟） */
+    /** 启动周期签到巡检（AlarmManager 自循环，每次触发后预约下一次） */
     fun startPeriodicCheck(context: Context) {
-        val request = PeriodicWorkRequestBuilder<SignWorker>(15, TimeUnit.MINUTES)
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build()
-            )
-            .setBackoffCriteria(BackoffPolicy.LINEAR, 5, TimeUnit.MINUTES)
-            .addTag("sign_periodic")
-            .build()
-
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            PERIODIC_NAME,
-            ExistingPeriodicWorkPolicy.UPDATE,
-            request
-        )
-        Log.i(TAG, "WorkManager 周期签到已启动 (15min)")
+        SignAlarmReceiver.scheduleNext(context)
+        Log.i(TAG, "AlarmManager 周期签到已启动 (15min 自循环)")
     }
 
     /** 取消周期签到 */
     fun cancelPeriodicCheck(context: Context) {
-        WorkManager.getInstance(context).cancelUniqueWork(PERIODIC_NAME)
+        SignAlarmReceiver.cancel(context)
     }
 
     /** 立即为指定用户执行签到 */
