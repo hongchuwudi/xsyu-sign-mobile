@@ -193,6 +193,46 @@ fun SettingsScreen(onBack: () -> Unit) {
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
+            Text("自部署方案", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        "如果你有服务器或电脑 24 小时开机，可以直接运行 Java 脚本 + 系统定时任务（如 cron），无需安装 App：",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            """// 1. 把下面两个文件放到同一个目录
+//    XSYUOneKeySign.java（完整源码见 GitHub）
+// 2. 改掉学号和密码
+// 3. javac XSYUOneKeySign.java && java XSYUOneKeySign
+// 4. 配合 cron / 任务计划程序 每天定时执行
+
+String username = "my-username";
+String password = "my-password";
+oneKeySign(username, password);""",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(12.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "完整源码：github.com/hongchuwudi/qq-robot-sign\n" +
+                        "文件路径：utils/XSYUOneKeySign.java",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
             Text("关于", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
             Card(
