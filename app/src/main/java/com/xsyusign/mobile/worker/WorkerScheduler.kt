@@ -20,10 +20,10 @@ object WorkerScheduler {
 
         workManager.enqueueUniquePeriodicWork(
             PERIODIC_WORK_NAME,
-            androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+            androidx.work.ExistingPeriodicWorkPolicy.UPDATE,
             request
         )
-        Log.d(TAG, "周期签到巡检已启动")
+        Log.i(TAG, "周期签到巡检已启动 (interval=15min)")
     }
 
     /** 取消周期签到巡检 */

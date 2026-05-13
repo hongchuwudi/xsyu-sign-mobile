@@ -410,7 +410,7 @@ private fun UserLogDialog(
                 try {
                     val jws = CasLoginService.login(user.username, user.password)
                     if (jws == null) return@withContext null to "CAS 登录失败"
-                    val resp = SignApiService.getSignList(jws, page = 1, size = 50)
+                    val resp = SignApiService.getSignList(jws, page = 1, size = 10)
                     if (resp.code != 0 && resp.code != 200) return@withContext null to (resp.message ?: "请求失败")
                     resp.data to null
                 } catch (e: Exception) {

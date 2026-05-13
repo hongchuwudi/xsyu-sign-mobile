@@ -60,6 +60,10 @@ class SignWorker(
                         .setRequiredNetworkType(NetworkType.CONNECTED)
                         .build()
                 )
+                .setBackoffCriteria(
+                    BackoffPolicy.LINEAR,
+                    5, TimeUnit.MINUTES
+                )
                 .addTag("sign_periodic")
                 .build()
         }
