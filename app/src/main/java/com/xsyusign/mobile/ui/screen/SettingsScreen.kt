@@ -92,11 +92,15 @@ fun SettingsScreen(onBack: () -> Unit) {
                         TextButton(onClick = {
                             isTesting = true
                             scope.launch {
-                                withContext(Dispatchers.IO) {
+                                val err = withContext(Dispatchers.IO) {
                                     TestAlarmReceiver.schedule(context)
                                 }
                                 isTesting = false
-                                Toast.makeText(context, "已调度，请清理后台后等待 30 秒，查看通知栏是否有消息", Toast.LENGTH_LONG).show()
+                                if (err != null) {
+                                    Toast.makeText(context, "调度失败: $err", Toast.LENGTH_LONG).show()
+                                } else {
+                                    Toast.makeText(context, "已调度，请清理后台后等待 30 秒，查看通知栏是否有消息", Toast.LENGTH_LONG).show()
+                                }
                             }
                         }) { Text("运行") }
                     }

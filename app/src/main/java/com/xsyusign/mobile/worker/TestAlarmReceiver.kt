@@ -24,24 +24,29 @@ class TestAlarmReceiver : BroadcastReceiver() {
         private const val CHANNEL_ID = "test_alarm_channel"
         const val ACTION_TEST = "com.xsyusign.mobile.TEST_ALARM"
 
-        /** 调度一个 30 秒后的闹钟 */
-        fun schedule(context: Context) {
-            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            val intent = Intent(context, TestAlarmReceiver::class.java).apply {
-                action = ACTION_TEST
-            }
-            val pendingIntent = PendingIntent.getBroadcast(
-                context, 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
-            val triggerTime = System.currentTimeMillis() + 30_000L
-            try {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent
+        /** 调度一个 30 秒后的闹钟，返回 null 表示成功，否则返回错误信息 */
+        fun schedule(context: Context): String? {
+            return try {
+                val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val intent = Intent(context, TestAlarmReceiver::class.java).apply {
+                    action = ACTION_TEST
+                }
+                val pendingIntent = PendingIntent.getBroadcast(
+                    context, 0, intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
-            } catch (e: SecurityException) {
-                alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+
+                val triggerTime = System.currentTimeMillis() + 30_000L
+                try {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent
+                    )
+                } catch (e: SecurityException) {
+                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+                }
+                null
+            } catch (e: Exception) {
+                e.message ?: "未知错误"
             }
         }
     }
