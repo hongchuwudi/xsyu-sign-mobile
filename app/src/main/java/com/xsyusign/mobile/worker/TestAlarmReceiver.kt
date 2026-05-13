@@ -52,6 +52,7 @@ class TestAlarmReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent?) {
+        android.util.Log.i("XSYUSign-Test", "TestAlarmReceiver.onReceive 触发!")
         showNotification(context)
     }
 
@@ -86,12 +87,22 @@ class TestAlarmReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .build()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
+        // Android 13+ 检查通知权限
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                android.util.Log.w("XSYUSign-Test", "无通知权限，用 Toast 替代")
+                android.os.Handler(context.mainLooper).post {
+                    android.widget.Toast.makeText(context,
+                        "定时任务测试成功！但通知权限未开启，请去设置开启通知",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                }
+                return
+            }
         }
         NotificationManagerCompat.from(context).notify(9999, notification)
+        android.util.Log.i("XSYUSign-Test", "通知已发送")
     }
 }
