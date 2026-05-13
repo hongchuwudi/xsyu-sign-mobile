@@ -236,7 +236,7 @@ fun UserEditScreen(
                 }
             }
 
-            // 签到时间点 — 内部自动 ±15 分钟容错窗口
+            // 签到时间点 — 15 分钟巡检会在最接近此时刻的检查点触发
             OutlinedTextField(
                 value = signTime,
                 onValueChange = { v ->
@@ -244,7 +244,7 @@ fun UserEditScreen(
                     signTime = filtered
                 },
                 label = { Text("签到时间") },
-                supportingText = { Text("系统会在此时前后 15 分钟内执行签到") },
+                supportingText = { Text("每15分钟检查一次，设17:30则在17:15~17:45之间签到") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("18:30") },
@@ -261,7 +261,6 @@ fun UserEditScreen(
                     isSaving = true
                     scope.launch {
                         val encrypted = CryptoUtil.encrypt(password)
-                        // 根据签到时间点计算 ±15 分钟窗口
                         val (startTime, endTime) = expandTimeWindow(signTime)
                         val user = if (isEdit) {
                             val existing = userRepo.getById(userId!!) ?: return@launch
