@@ -16,6 +16,7 @@ import com.xsyusign.mobile.data.db.AppDatabase
 import com.xsyusign.mobile.data.entity.User
 import com.xsyusign.mobile.data.repository.SignLogRepository
 import com.xsyusign.mobile.data.repository.UserRepository
+import com.xsyusign.mobile.util.midpointTime
 import com.xsyusign.mobile.worker.WorkerScheduler
 import kotlinx.coroutines.launch
 
@@ -191,7 +192,7 @@ private fun UserDetailCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "签到 ${user.signStartTime}",
+                    "签到 ${midpointTime(user.signStartTime, user.signEndTime)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
