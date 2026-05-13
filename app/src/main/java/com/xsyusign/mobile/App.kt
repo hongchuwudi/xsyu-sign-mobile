@@ -19,23 +19,17 @@ class App : Application(), Configuration.Provider {
         // 初始化 WorkManager（必须在 super.onCreate() 之后）
         WorkManager.initialize(this, workManagerConfiguration)
 
-        // 启动周期签到巡检
-        val err = WorkerScheduler.startPeriodicCheck(this)
-        if (err != null) {
-            Log.e("hongchu-sign", "定时签到调度失败: $err")
-            Handler(Looper.getMainLooper()).post {
-                Toast.makeText(this, "定时签到失败: $err", Toast.LENGTH_LONG).show()
-            }
-        } else {
-            Log.i("hongchu-sign", "App 启动 — 定时签到巡检已调度")
-            Handler(Looper.getMainLooper()).post {
-                Toast.makeText(this, "定时签到已启动", Toast.LENGTH_SHORT).show()
-            }
-        }
+        // 启动 WorkManager 周期签到巡检
+        WorkerScheduler.startPeriodicCheck(this)
+        Log.i("hongchu-sign", "App 启动 — WorkManager 周期签到已调度")
 
         // 前台保活服务默认启动
         KeepAliveService.start(this)
         Log.i("hongchu-sign", "前台保活服务已启动")
+
+        Handler(Looper.getMainLooper()).post {
+            Toast.makeText(this, "定时签到已启动", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override val workManagerConfiguration: Configuration
